@@ -8,9 +8,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import mago.apps.wearhealthrawdata.presentation.ui.screens.MainScreen
 import mago.apps.wearhealthrawdata.presentation.ui.screens.MainViewModel
+import mago.apps.wearhealthrawdata.presentation.ui.screens.MeasurementScreen
 import mago.apps.wearhealthrawdata.presentation.ui.theme.WearHealthRawDataTheme
 
 
@@ -36,7 +41,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            WearApp()
+            WearHealthRawDataTheme {
+                NavGraph()
+            }
         }
     }
 
@@ -45,9 +52,27 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
-fun WearApp() {
-    WearHealthRawDataTheme {
-        MainScreen()
+fun NavGraph() {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    activity.mainViewModel.navController = rememberNavController()
+    NavHost(
+        navController = activity.mainViewModel.navController,
+        startDestination = Screens.Home.route
+    ) {
+        composable(route = Screens.Home.route) {
+            MainScreen()
+        }
+        composable(route = Screens.Measurement.route) {
+            MeasurementScreen()
+        }
     }
+}
+
+
+sealed class Screens(val route: String) {
+    object Home : Screens("home")
+    object Measurement : Screens("Measurement")
 }
