@@ -44,12 +44,15 @@ class MainViewModel : ViewModel() {
 
     private var sdk: OrotMedicationSDK = OrotMedicationSDK()
     val serverState = MutableStateFlow<Pair<State, String?>>(Pair(State.IDLE, null))
+    val loadingBarIsShowing = MutableStateFlow(false)
     fun connectionOrotServer() {
+        loadingBarIsShowing.update { true }
         sdk.run {
             setListener(object : MedicationStateListener {
                 override fun onState(state: State, msg: String?) {
                     Log.w(MainActivity.TAG, "onState: $state")
                     serverState.update { Pair(state, msg) }
+                    loadingBarIsShowing.update { false }
                 }
             })
             connectServer()

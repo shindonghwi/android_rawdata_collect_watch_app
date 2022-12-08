@@ -1,12 +1,13 @@
 package mago.apps.wearhealthrawdata.presentation.ui.screens
 
+import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -21,18 +22,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mago.apps.orot_medication.model.State
 import mago.apps.wearhealthrawdata.R
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
 import mago.apps.wearhealthrawdata.presentation.ui.Screens
+import mago.apps.wearhealthrawdata.presentation.ui.theme.Red400
+import mago.apps.wearhealthrawdata.presentation.ui.theme.disableButtonColor
+import mago.apps.wearhealthrawdata.presentation.ui.theme.enableButtonColor
+import mago.apps.wearhealthrawdata.presentation.ui.theme.primaryColor
 import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.noDuplicationClickable
-
-val enableButtonColor = Color(0xFF30C46B)
-val disableButtonColor = Color(0xFFB0B1B0)
 
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
     val activity = context as MainActivity
+
+    ServerState()
 
     Column(
         modifier = Modifier
@@ -41,24 +46,57 @@ fun MainScreen() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .noDuplicationClickable {
-                    activity.mainViewModel.updateMeasurementAvailableStatue(true)
-                },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+        Box {
             Column(
-                modifier = Modifier.weight(0.9f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxSize()
+                    .noDuplicationClickable {
+                        activity.mainViewModel.updateMeasurementAvailableStatue(true)
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                AppLogo()
-                AppTitle()
-                StartButton()
+                Column(
+                    modifier = Modifier.weight(0.9f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AppLogo()
+                    AppTitle()
+                    StartButton()
+                }
+                Footer()
             }
-            Footer()
+            LoadingBar()
+        }
+    }
+
+}
+
+@Composable
+private fun LoadingBar() {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val loadingBarIsShowing = activity.mainViewModel.loadingBarIsShowing.collectAsState().value
+
+    if (loadingBarIsShowing) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Red400)
+        }
+    }
+}
+
+@Composable
+private fun ServerState() {
+    val context = LocalContext.current
+    val activity = context as MainActivity
+    val serverState = activity.mainViewModel.serverState.collectAsState().value
+
+    LaunchedEffect(key1 = serverState) {
+        if (serverState.first == State.ERROR) {
+            Toast.makeText(context, "서버 연결 실패", Toast.LENGTH_SHORT).show()
+        } else if (serverState.first == State.CONNECTED) {
+            Toast.makeText(context, "서버 연결 성공", Toast.LENGTH_SHORT).show()
+            activity.mainViewModel.navController.navigate(Screens.Measurement.route)
         }
     }
 }
@@ -77,14 +115,14 @@ private fun StartButton() {
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, enableButtonColor, RoundedCornerShape(12.dp))
             .noDuplicationClickable {
-                activity.mainViewModel.navController.navigate(Screens.Measurement.route)
+                activity.mainViewModel.connectionOrotServer()
             },
         contentAlignment = Alignment.Center
     ) {
         Text(
             modifier = Modifier.padding(horizontal = 2.dp, vertical = 14.dp),
             text = "시작하기",
-            color = Color(0xFF444444),
+            color = primaryColor,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -122,14 +160,14 @@ private fun AppTitle() {
     Text(
         modifier = Modifier.padding(top = 10.dp),
         text = "Watch 데이터 수집기",
-        color = Color(0xFF444444),
+        color = primaryColor,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
     )
 
     Text(
         text = "(Raw Data Collector)",
-        color = Color(0xFF444444).copy(alpha = 0.4f),
+        color = primaryColor.copy(alpha = 0.4f),
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
     )
@@ -141,7 +179,7 @@ private fun ColumnScope.Footer() {
     Text(
         modifier = Modifier.weight(0.15f),
         text = "Mago & OrotCode",
-        color = Color(0xFF444444),
+        color = primaryColor,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
     )

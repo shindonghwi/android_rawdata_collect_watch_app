@@ -18,41 +18,51 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mago.apps.orot_medication.model.State
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
+import mago.apps.wearhealthrawdata.presentation.ui.theme.disableButtonColor
+import mago.apps.wearhealthrawdata.presentation.ui.theme.enableButtonColor
+import mago.apps.wearhealthrawdata.presentation.ui.theme.primaryColor
 import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.noDuplicationClickable
 
 @Composable
 fun MeasurementScreen() {
-    Row(
-        modifier = Modifier.fillMaxSize().background(Color.White),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(18.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HeartRateContent()
 
-        ConnectionButton()
-        DataSendButton()
-    }
-}
+        HeartRateContent(modifier = Modifier.weight(0.6f))
 
-@Composable
-private fun HeartRateContent() {
-
-}
-
-@Composable
-private fun ConnectionButton() {
-    val context = LocalContext.current
-    val activity = context as MainActivity
-    val serverState = activity.mainViewModel.serverState.collectAsState().value
-
-    LaunchedEffect(key1 = serverState) {
-        if (serverState.first == State.ERROR) {
-            Toast.makeText(context, serverState.second.toString(), Toast.LENGTH_SHORT).show()
-        } else if (serverState.first == State.CONNECTED) {
-            Toast.makeText(context, "서버 연결 성공", Toast.LENGTH_SHORT).show()
+        Row(
+            modifier = Modifier.weight(0.4f).background(Color.Yellow),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            MeasurementButton()
+            DataSendButton()
         }
+
+    }
+}
+
+@Composable
+private fun HeartRateContent(modifier: Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            modifier = Modifier.padding(top = 10.dp),
+            text = "심박수 & 혈압",
+            color = primaryColor,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 
+}
+
+@Composable
+private fun MeasurementButton() {
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -60,12 +70,11 @@ private fun ConnectionButton() {
             .clip(CircleShape)
             .background(enableButtonColor)
             .noDuplicationClickable {
-                activity.mainViewModel.connectionOrotServer()
-            },
-        contentAlignment = Alignment.Center
+                Toast.makeText(context, "측정", Toast.LENGTH_SHORT).show()
+            }, contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "연결",
+            text = "측정",
             color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -76,56 +85,19 @@ private fun ConnectionButton() {
 @Composable
 private fun DataSendButton() {
     val context = LocalContext.current
-    val activity = context as MainActivity
-    val serverState = activity.mainViewModel.serverState.collectAsState().value
 
     Box(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(
-                when (serverState.first) {
-                    State.IDLE,
-                    State.ERROR,
-                    State.CLOSED -> {
-                        disableButtonColor
-                    }
-                    else -> {
-                        enableButtonColor
-                    }
-                }
-
-            )
+            .background(enableButtonColor)
             .noDuplicationClickable {
-                when (serverState.first) {
-                    State.IDLE,
-                    State.ERROR,
-                    State.CLOSED -> {
-                        Toast
-                            .makeText(context, "서버 연결 안됨", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                    else -> {
-                        activity.mainViewModel.connectionOrotServer()
-                    }
-                }
-            },
-        contentAlignment = Alignment.Center
+                Toast.makeText(context, "전송", Toast.LENGTH_SHORT).show()
+            }, contentAlignment = Alignment.Center
     ) {
         Text(
             text = "전송",
-            color = Color.White.copy(
-                alpha = when (serverState.first) {
-                    State.IDLE,
-                    State.ERROR,
-                    State.CLOSED -> {
-                        0.7f
-                    }
-                    else -> {
-                        1f
-                    }
-                }
-            ),
+            color = Color.White,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
         )

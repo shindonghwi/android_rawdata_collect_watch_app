@@ -46,6 +46,7 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
     implementation(project(":orot_medication"))
 
+    implementation("com.patrykandpatryk.vico:compose:1.6.0")
     Libraries.apply {
 
         Libraries.AndroidX.apply {
@@ -76,5 +77,7 @@ dependencies {
         Libraries.JetBrain.apply {
             implementation(kotlinStdlibJdk)
         }
+
+
     }
 }
