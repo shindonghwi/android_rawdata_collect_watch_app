@@ -97,3 +97,11 @@ inline fun coroutineScopeOnMain(
     delay(initDelay)
     body()
 }
+
+inline fun coroutineScopeOnDefault(
+    initDelay: Long = 0,
+    crossinline body: suspend CoroutineScope.() -> Unit
+) = CoroutineScope(Dispatchers.Default).launch {
+    delay(initDelay)
+    body()
+}

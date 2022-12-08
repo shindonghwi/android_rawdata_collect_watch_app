@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.Colors
 
 
-val enableButtonColor = Color(0xFF30C46B)
+val enableButtonColor = Color(0xFFF15370)
 val disableButtonColor = Color(0xFFB0B1B0)
 val primaryColor = Color(0xFF444444)
 
