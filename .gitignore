@@ -74,7 +74,6 @@ fabric.properties
 ### Android template
 # Built application files
 *.apk
-*.aar
 *.ap_
 *.aab
 
