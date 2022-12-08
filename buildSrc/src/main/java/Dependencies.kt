@@ -47,7 +47,7 @@ object Versions {
     }
 
     object Google{
-        const val googlePlayWear = "17.1.0"
+        const val playServiceWear = "17.1.0"
         const val googleService = "4.3.14"
         const val wearable = "2.8.1"
         const val guava = "30.1-jre"
@@ -104,8 +104,9 @@ object Libraries {
     }
 
     object Google{
-        const val googlePlay = "com.google.android.gms:play-services-wearable:${Versions.Google.googlePlayWear}"
-        const val wearable = "com.google.android.support:wearable:${Versions.Google.wearable}" // not implementation, compileOnly '~~'
+        const val playServiceWear = "com.google.android.gms:play-services-wearable:${Versions.Google.playServiceWear}"
+        const val wearable = "com.google.android.support:wearable:${Versions.Google.wearable}"
+        const val compileWearable = "com.google.android.wearable:wearable:${Versions.Google.wearable}" // not implementation, compileOnly '~~'
         const val guava = "com.google.guava:guava:${Versions.Google.guava}"
     }
 

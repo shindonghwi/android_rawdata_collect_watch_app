@@ -1,4 +1,4 @@
-package mago.apps.wearhealthrawdata.presentation.theme
+package mago.apps.wearhealthrawdata.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.Colors

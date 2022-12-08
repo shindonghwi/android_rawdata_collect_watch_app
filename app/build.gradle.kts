@@ -46,6 +46,11 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
 
     Libraries.apply {
+
+        Libraries.AndroidX.apply {
+            implementation(wear)
+        }
+
         Libraries.KTX.apply {
             implementation(core)
         }
@@ -59,6 +64,16 @@ dependencies {
             implementation(constraintLayout)
             implementation(wearMaterial)
             implementation(wearFoundation)
+        }
+
+        Libraries.Google.apply {
+            implementation(wearable)
+            implementation(playServiceWear)
+            compileOnly(compileWearable)
+        }
+
+        Libraries.JetBrain.apply {
+            implementation(kotlinStdlibJdk)
         }
     }
 }
