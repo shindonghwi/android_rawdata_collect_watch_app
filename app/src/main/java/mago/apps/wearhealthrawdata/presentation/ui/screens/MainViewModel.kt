@@ -142,7 +142,10 @@ class MainViewModel : ViewModel() {
 
     fun clear() {
         measurementCancel()
-        healthTrackingHelper.stopHeartBeat()
+        healthTrackingHelper.run {
+            stopHeartBeat()
+            disconnect()
+        }
         closeOrotServer()
     }
 

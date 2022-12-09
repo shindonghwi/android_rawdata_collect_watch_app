@@ -51,6 +51,10 @@ class HealthTrackingHelper {
         heartRateTracker?.unsetEventListener()
     }
 
+    fun disconnect(){
+        healthTrackingService?.disconnectService()
+    }
+
     private val connectionListener: ConnectionListener = object : ConnectionListener {
         override fun onConnectionSuccess() {
             Log.i(TAG, "Connected")
