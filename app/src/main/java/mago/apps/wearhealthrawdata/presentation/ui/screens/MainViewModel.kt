@@ -12,6 +12,7 @@ import mago.apps.orot_medication.OrotMedicationSDK
 import mago.apps.orot_medication.interfaces.MedicationStateListener
 import mago.apps.orot_medication.model.State
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
+import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
 import mago.apps.wearhealthrawdata.presentation.ui.utils.HealthTrackingHelper
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateData
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
@@ -126,7 +127,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun closeOrotServer() = sdk.closeServer()
-    fun sendMedicationInfo() = sdk.sendMedicalInfo(0, 0)
+    fun sendMedicationInfo() = sdk.sendMedicalInfo(hrList.average().toInt(), 0)
 
     override fun onCleared() {
         super.onCleared()
