@@ -65,10 +65,12 @@ class MainViewModel : ViewModel() {
 
     fun measurementCancel() {
         Log.w(TAG, "measurementCancel START: ")
-        measurementScope.launch {
-            timerIsStarted = false
-            isSendingButtonEnable.update { false }
-            measurementScope.cancel()
+        if(::measurementScope.isInitialized){
+            measurementScope.launch {
+                timerIsStarted = false
+                isSendingButtonEnable.update { false }
+                measurementScope.cancel()
+            }
         }
         progressValue.update { 0 }
         hrList.clear()
