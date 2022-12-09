@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +31,19 @@ import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
 
 @Composable
 fun MeasurementScreen() {
+    val context = LocalContext.current
+    val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
+
+    LaunchedEffect(key1 = Unit){
+        mainViewModel.initTrackingHelper(context)
+    }
+
+    DisposableEffect(key1 = Unit){
+        onDispose {
+            mainViewModel.clear()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -134,11 +145,10 @@ private fun HeartRateContent() {
 
     mainViewModel.run {
         if (!timerIsStarted && heartValue?.hr != 0) {
-            Log.w(TAG, "measurementTimerStart: ui Start")
+            updateTimerFlag(true)
             coroutineScopeOnDefault {
                 measurementStart()
             }
-            updateTimerFlag(true)
         }
     }
 
@@ -254,11 +264,12 @@ private fun DataSendButton() {
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, disableButtonColor, RoundedCornerShape(12.dp))
                 .noDuplicationClickable(enabled = isMeasurementEnd && mainViewModel.timerIsStarted) {
-                    Toast.makeText(context, "재측정 시작", Toast.LENGTH_SHORT).show()
+                    Toast
+                        .makeText(context, "재측정 시작", Toast.LENGTH_SHORT)
+                        .show()
                     coroutineScopeOnDefault {
                         mainViewModel.run {
-                            measurementCancel()
-                            measurementStart()
+                            reconnectHeartRateReceiver()
                         }
                     }
                 },

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import mago.apps.orot_medication.OrotMedicationSDK
 import mago.apps.orot_medication.interfaces.MedicationStateListener
@@ -15,7 +16,6 @@ import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
 import mago.apps.wearhealthrawdata.presentation.ui.utils.HealthTrackingHelper
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateData
-import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
 import kotlin.random.Random
 
 
@@ -37,6 +37,7 @@ class MainViewModel : ViewModel() {
     init {
         healthTrackingHelper.isConnected.onEach {
             if (it) {
+                Log.w(TAG, "measurementStart isConnected: ")
                 healthTrackingHelper.startHeartBeat()
             }
         }.launchIn(viewModelScope)
@@ -44,6 +45,7 @@ class MainViewModel : ViewModel() {
 
     var timerIsStarted = false
     var isSendingButtonEnable = MutableStateFlow<Boolean>(false)
+
     val progressValue = MutableStateFlow<Int>(0)
     fun updateTimerFlag(flag: Boolean) {
         timerIsStarted = flag
@@ -52,41 +54,47 @@ class MainViewModel : ViewModel() {
     private lateinit var measurementScope: CoroutineScope
 
     fun measurementStart() {
-        measurementScope = CoroutineScope(Dispatchers.Default).apply {
+        Log.w(TAG, "measurementStart START: ")
+        measurementScope = CoroutineScope(SupervisorJob() + Dispatchers.Default).apply {
             launch {
                 measurementTimerStart()
+                Log.w(TAG, "measurementStart END: ")
             }
         }
     }
 
     fun measurementCancel() {
+        Log.w(TAG, "measurementCancel START: ")
         measurementScope.launch {
             timerIsStarted = false
             isSendingButtonEnable.update { false }
-            progressValue.update { 0 }
-            hrList.clear()
-            bloodPressureList.clear()
-            healthTrackingHelper.run {
-                stopHeartBeat()
-                startHeartBeat()
-            }
             measurementScope.cancel()
+        }
+        progressValue.update { 0 }
+        hrList.clear()
+        bloodPressureList.clear()
+        Log.w(TAG, "measurementCancel END: ")
+    }
+
+    fun reconnectHeartRateReceiver() {
+        measurementCancel()
+        healthTrackingHelper.run {
+            stopHeartBeat()
+            startHeartBeat()
         }
     }
 
-    private suspend fun measurementTimerStart() = measurementScope.launch {
-        flow {
-            for (i in 0..100) {
-                emit(i)
-                if (i >= 60) {
+    private suspend fun measurementTimerStart() {
+        measurementScope.launch {
+            Log.w(TAG, "measurementTimerStart: START", )
+            for (percent in 0..100){
+                Log.w(TAG, "flow: $percent")
+                if (percent >= 60) {
                     delay((Random.nextInt(100) + 30).toLong())
                 } else {
                     delay((Random.nextInt(350) + 150).toLong())
                 }
-            }
-        }
-            .cancellable()
-            .map { percent ->
+
                 progressValue.update { percent }
 
                 if (percent == 100) {
@@ -96,8 +104,9 @@ class MainViewModel : ViewModel() {
                     }
                     isSendingButtonEnable.update { true }
                 }
-
-            }.collect()
+            }
+            Log.w(TAG, "measurementTimerStart: END", )
+        }
     }
 
     fun getHeartBeatState(): MutableState<HeartRateData>? {
@@ -129,9 +138,15 @@ class MainViewModel : ViewModel() {
     fun closeOrotServer() = sdk.closeServer()
     fun sendMedicationInfo() = sdk.sendMedicalInfo(hrList.average().toInt(), 0)
 
+    fun clear() {
+        measurementCancel()
+        healthTrackingHelper.stopHeartBeat()
+        closeOrotServer()
+    }
+
     override fun onCleared() {
         super.onCleared()
-        closeOrotServer()
+        clear()
     }
 
 }

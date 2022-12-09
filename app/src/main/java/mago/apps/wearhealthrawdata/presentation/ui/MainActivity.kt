@@ -32,12 +32,6 @@ class MainActivity : ComponentActivity() {
             ) == PackageManager.PERMISSION_DENIED
         ) {
             requestPermissions(arrayOf(Manifest.permission.BODY_SENSORS), 0)
-        } else {
-            mainViewModel.run {
-                initTrackingHelper(this@MainActivity)
-                Log.w(TAG, "mainViewModel init")
-            }
-
         }
 
         setContent {
@@ -49,6 +43,11 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val TAG = "WATCH APP TAG"
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.w(TAG, "onDestroy: ", )
     }
 }
 

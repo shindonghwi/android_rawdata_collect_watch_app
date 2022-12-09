@@ -27,14 +27,17 @@ class HealthTrackingHelper {
     val errorState: MutableStateFlow<String?> = MutableStateFlow<String?>(null)
 
     val heartBeatState = heartRateReceiver?.callback
-
+    var listener: HealthTracker.TrackerEventListener? = null
     fun setUp(context: Context) {
         healthTrackingService = HealthTrackingService(connectionListener, context)
         healthTrackingService?.connectService()
     }
 
     fun startHeartBeat(){
-        heartRateTracker?.setEventListener(heartRateReceiver?.trackerListener)
+        if (listener == null){
+            listener = heartRateReceiver?.trackerListener
+            heartRateTracker?.setEventListener(listener)
+        }
     }
 
     fun completeHeartBeat(averageHr: Int, averageBloodPressure:Int){
@@ -44,6 +47,7 @@ class HealthTrackingHelper {
     }
 
     fun stopHeartBeat(){
+        listener = null
         heartRateTracker?.unsetEventListener()
     }
 
