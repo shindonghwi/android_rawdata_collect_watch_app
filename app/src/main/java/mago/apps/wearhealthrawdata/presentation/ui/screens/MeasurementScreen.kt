@@ -1,6 +1,8 @@
 package mago.apps.wearhealthrawdata.presentation.ui.screens
 
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -8,8 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,13 +19,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.MaterialTheme
 import mago.apps.wearhealthrawdata.R
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
-import mago.apps.wearhealthrawdata.presentation.ui.theme.disableButtonColor
-import mago.apps.wearhealthrawdata.presentation.ui.theme.enableButtonColor
-import mago.apps.wearhealthrawdata.presentation.ui.theme.primaryColor
+import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
+import mago.apps.wearhealthrawdata.presentation.ui.theme.*
+import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnDefault
 import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.noDuplicationClickable
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
 
@@ -35,8 +39,16 @@ fun MeasurementScreen() {
             .background(Color.White),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        MeasurementTitle(modifier = Modifier.weight(0.6f))
+        Column(
+            modifier = Modifier.weight(0.6f),
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+            MeasurementTitle()
+            CountDownTimer()
+            MeasurementIconValue()
+        }
 
         Column(
             modifier = Modifier
@@ -44,7 +56,6 @@ fun MeasurementScreen() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CountDownTimer()
             DataSendButton()
         }
 
@@ -54,44 +65,48 @@ fun MeasurementScreen() {
 @Composable
 private fun CountDownTimer() {
     val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
-    val timerCount = mainViewModel.timerValueState.collectAsState().value
+    val percent = mainViewModel.progressValue.collectAsState().value
 
-    Log.w("ASdasdads", "CountDownTimer: $timerCount", )
-
-    Text(
-        text = timerCount.toString(),
-        color = primaryColor,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
-    )
-
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "$percent%",
+            color = enableButtonColor.copy(alpha = 0.8f),
+            style = MaterialTheme.typography.display3,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Composable
-private fun MeasurementTitle(modifier: Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+private fun MeasurementTitle() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text(
-            modifier = Modifier.padding(top = 20.dp),
             text = "심박수 & 혈압",
             color = primaryColor,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
         )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(top = 20.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            HeartRateContent()
-            BloodPressureContent()
-        }
-
     }
+}
 
+@Composable
+private fun MeasurementIconValue() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        HeartRateContent()
+        BloodPressureContent()
+    }
 }
 
 @Composable
@@ -99,9 +114,9 @@ private fun HeartRateContent() {
 
     val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
 
-    val heartValue = mainViewModel.heartBeatState?.value?.hr ?: 0
+    val heartValue = mainViewModel.getHeartBeatState()?.value
 
-    val status = when (mainViewModel.heartBeatState?.value?.status) {
+    val status = when (heartValue?.status) {
         HeartRateType.ERROR -> {
             "측정불가"
         }
@@ -118,32 +133,63 @@ private fun HeartRateContent() {
     }
 
     mainViewModel.run {
-        if (!timerIsStarted && heartValue != 0){
-            measurementTimerStart()
+        if (!timerIsStarted && heartValue?.hr != 0) {
+            Log.w(TAG, "measurementTimerStart: ui Start")
+            coroutineScopeOnDefault {
+                measurementStart()
+            }
             updateTimerFlag(true)
         }
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            modifier = Modifier.size(40.dp),
-            painter = painterResource(id = R.drawable.heart),
-            contentDescription = null
+    val infiniteTransition = rememberInfiniteTransition()
+    val iconSize by infiniteTransition.animateFloat(
+        initialValue = 35.0f,
+        targetValue = 39.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 300, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
         )
+    )
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                modifier = Modifier.size(
+                    if (mainViewModel.timerIsStarted) {
+                        when (status) {
+                            "측정중", "측정대기" -> iconSize.dp
+                            else -> 39.dp
+                        }
+                    } else {
+                        39.dp
+                    }
+                ),
+                painter = painterResource(id = R.drawable.heart),
+                contentDescription = null
+            )
+        }
         Column(
-            modifier = Modifier.padding(start = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = status,
-                color = primaryColor,
-                fontSize = 12.sp,
+                color = when (status) {
+                    "측정중" -> allowColor.copy(alpha = 0.8f)
+                    "측정불가" -> denyColor.copy(alpha = 0.8f)
+                    else -> primaryColor.copy(alpha = 0.8f)
+                },
+                style = MaterialTheme.typography.caption2
             )
             Text(
-                text = heartValue.toString(),
-                color = primaryColor,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                text = (heartValue?.hr ?: 0).toString(),
+                color = when (status) {
+                    "측정중" -> allowColor.copy(alpha = 0.8f)
+                    "측정불가" -> denyColor.copy(alpha = 0.8f)
+                    else -> primaryColor.copy(alpha = 0.8f)
+                },
+                style = MaterialTheme.typography.body1
             )
         }
 
@@ -152,12 +198,25 @@ private fun HeartRateContent() {
 
 @Composable
 private fun BloodPressureContent() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            modifier = Modifier.size(40.dp),
-            painter = painterResource(id = R.drawable.arm),
-            contentDescription = null
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val iconSize by infiniteTransition.animateFloat(
+        initialValue = 35.0f,
+        targetValue = 39.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 300, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
         )
+    )
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(42.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                modifier = Modifier.size(if (false) iconSize.dp else 35.dp),
+                painter = painterResource(id = R.drawable.arm),
+                contentDescription = null
+            )
+        }
         Column(
             modifier = Modifier.padding(start = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -165,13 +224,13 @@ private fun BloodPressureContent() {
             Text(
                 text = "측정불가",
                 color = primaryColor,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.caption2
+
             )
             Text(
-                text = "123",
+                text = "0",
                 color = primaryColor,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.body1
             )
         }
     }
@@ -179,6 +238,10 @@ private fun BloodPressureContent() {
 
 @Composable
 private fun DataSendButton() {
+    val context = LocalContext.current
+    val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
+    val isMeasurementEnd = mainViewModel.isSendingButtonEnable.collectAsState().value
+
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -187,20 +250,49 @@ private fun DataSendButton() {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 50.dp)
-                .wrapContentHeight()
+                .size(width = 60.dp, height = 40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, disableButtonColor, RoundedCornerShape(12.dp))
-                .noDuplicationClickable {
-
+                .noDuplicationClickable(enabled = isMeasurementEnd && mainViewModel.timerIsStarted) {
+                    Toast.makeText(context, "재측정 시작", Toast.LENGTH_SHORT).show()
+                    coroutineScopeOnDefault {
+                        mainViewModel.run {
+                            measurementCancel()
+                            measurementStart()
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp),
+                text = "재측정",
+                color = if (isMeasurementEnd && mainViewModel.timerIsStarted) {
+                    enableButtonColor
+                } else {
+                    disableButtonColor.copy(alpha = 0.5f)
+                },
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .size(width = 60.dp, height = 40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, disableButtonColor, RoundedCornerShape(12.dp))
+                .noDuplicationClickable(enabled = isMeasurementEnd) {
+                    Toast
+                        .makeText(context, "전송", Toast.LENGTH_SHORT)
+                        .show()
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp),
                 text = "전송",
-                color = disableButtonColor.copy(alpha = 0.5f),
+                color = if (isMeasurementEnd) enableButtonColor else disableButtonColor.copy(alpha = 0.5f),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
             )

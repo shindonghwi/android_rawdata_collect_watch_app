@@ -54,7 +54,7 @@ class HeartRateReceiver {
         }
     }
 
-    private fun updateHeartRateData(hr: Int, ibi: Int, status: HeartRateType) {
+    fun updateHeartRateData(hr: Int, ibi: Int, status: HeartRateType) {
         Log.i(TAG, "HeartRateReceiver: updateHeartRateData || hr:$hr , ibi:$ibi , status:$status")
         callback.value = HeartRateData(hr = hr, ibi = ibi, status = status)
     }

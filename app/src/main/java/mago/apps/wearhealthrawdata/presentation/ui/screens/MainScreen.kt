@@ -93,9 +93,9 @@ private fun ServerState() {
 
     LaunchedEffect(key1 = serverState) {
         if (serverState.first == State.ERROR) {
-            Toast.makeText(context, "서버 연결 실패", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "네트워크를 확인해주세요", Toast.LENGTH_SHORT).show()
         } else if (serverState.first == State.CONNECTED) {
-            Toast.makeText(context, "서버 연결 성공", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "측정이 시작됩니다", Toast.LENGTH_SHORT).show()
             activity.mainViewModel.navController.navigate(Screens.Measurement.route)
         }
     }
@@ -115,7 +115,8 @@ private fun StartButton() {
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, enableButtonColor, RoundedCornerShape(12.dp))
             .noDuplicationClickable {
-                activity.mainViewModel.connectionOrotServer()
+                activity.mainViewModel.navController.navigate(Screens.Measurement.route)
+//                activity.mainViewModel.connectionOrotServer()
             },
         contentAlignment = Alignment.Center
     ) {

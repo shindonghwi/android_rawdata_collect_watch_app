@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateReceiver
+import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
 
 class HealthTrackingHelper {
 
@@ -34,6 +35,16 @@ class HealthTrackingHelper {
 
     fun startHeartBeat(){
         heartRateTracker?.setEventListener(heartRateReceiver?.trackerListener)
+    }
+
+    fun completeHeartBeat(averageHr: Int, averageBloodPressure:Int){
+        heartBeatState?.value.let {
+            heartRateReceiver?.updateHeartRateData(averageHr, averageBloodPressure, HeartRateType.COMPLETED)
+        }
+    }
+
+    fun stopHeartBeat(){
+        heartRateTracker?.unsetEventListener()
     }
 
     private val connectionListener: ConnectionListener = object : ConnectionListener {

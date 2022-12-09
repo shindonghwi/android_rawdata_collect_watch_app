@@ -2,18 +2,19 @@ package mago.apps.wearhealthrawdata.presentation.ui.screens
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import mago.apps.orot_medication.OrotMedicationSDK
 import mago.apps.orot_medication.interfaces.MedicationStateListener
 import mago.apps.orot_medication.model.State
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
 import mago.apps.wearhealthrawdata.presentation.ui.utils.HealthTrackingHelper
-import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnDefault
-import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnMain
+import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateData
+import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateType
 import kotlin.random.Random
 
 
@@ -40,28 +41,72 @@ class MainViewModel : ViewModel() {
         }.launchIn(viewModelScope)
     }
 
-    private val initTimerValue = 40L
     var timerIsStarted = false
-    val timerValueState = MutableStateFlow<Long>(initTimerValue)
-
-    fun updateTimerFlag(flag: Boolean){
+    var isSendingButtonEnable = MutableStateFlow<Boolean>(false)
+    val progressValue = MutableStateFlow<Int>(0)
+    fun updateTimerFlag(flag: Boolean) {
         timerIsStarted = flag
     }
 
-    fun measurementTimerStart() {
-        tickerFlow(start = initTimerValue).onEach { it ->
-            /** 여기해야함 */
-            timerValueState.value = it
-        }.launchIn(viewModelScope)
-    }
+    private lateinit var measurementScope: CoroutineScope
 
-    private fun tickerFlow(start: Long, end: Long = 0L) = flow {
-        for (i in start downTo end) {
-            emit(i)
-            delay((Random.nextInt(1500 - 300 + 1) + 300).toLong())
+    fun measurementStart() {
+        measurementScope = CoroutineScope(Dispatchers.Default).apply {
+            launch {
+                measurementTimerStart()
+            }
         }
     }
-    val heartBeatState = healthTrackingHelper.heartBeatState
+
+    fun measurementCancel() {
+        measurementScope.launch {
+            timerIsStarted = false
+            isSendingButtonEnable.update { false }
+            progressValue.update { 0 }
+            hrList.clear()
+            bloodPressureList.clear()
+            healthTrackingHelper.run {
+                stopHeartBeat()
+                startHeartBeat()
+            }
+            measurementScope.cancel()
+        }
+    }
+
+    private suspend fun measurementTimerStart() = measurementScope.launch {
+        flow {
+            for (i in 0..100) {
+                emit(i)
+                if (i >= 60) {
+                    delay((Random.nextInt(100) + 30).toLong())
+                } else {
+                    delay((Random.nextInt(350) + 150).toLong())
+                }
+            }
+        }
+            .cancellable()
+            .map { percent ->
+                progressValue.update { percent }
+
+                if (percent == 100) {
+                    healthTrackingHelper.run {
+                        completeHeartBeat(hrList.average().toInt(), 0)
+                        stopHeartBeat()
+                    }
+                    isSendingButtonEnable.update { true }
+                }
+
+            }.collect()
+    }
+
+    fun getHeartBeatState(): MutableState<HeartRateData>? {
+        val callback = healthTrackingHelper.heartBeatState
+        callback?.value?.hr.takeIf { it != 0 }?.apply { hrList.add(this) }
+        return callback
+    }
+
+    val hrList = arrayListOf<Int>()
+    val bloodPressureList = arrayListOf<Int>()
 
     private var sdk: OrotMedicationSDK = OrotMedicationSDK()
     val serverState = MutableStateFlow<Pair<State, String?>>(Pair(State.IDLE, null))
