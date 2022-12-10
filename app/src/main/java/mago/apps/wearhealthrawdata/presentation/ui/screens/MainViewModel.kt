@@ -16,6 +16,8 @@ import mago.apps.orot_medication.interfaces.MedicationStateListener
 import mago.apps.orot_medication.model.State
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
 import mago.apps.wearhealthrawdata.presentation.ui.utils.HealthTrackingHelper
+import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnDefault
+import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnMain
 import mago.apps.wearhealthrawdata.presentation.ui.utils.heartrate.HeartRateData
 import kotlin.random.Random
 
@@ -117,7 +119,6 @@ class MainViewModel : ViewModel() {
 
     private var sdk: OrotMedicationSDK = OrotMedicationSDK()
     val serverState = MutableStateFlow<Pair<State, String?>>(Pair(State.IDLE, null))
-    val serverAllowedTransmission = MutableStateFlow<Boolean>(false)
     val loadingBarIsShowing = MutableStateFlow(false)
     fun connectionOrotServer() {
         loadingBarIsShowing.update { true }
@@ -130,8 +131,19 @@ class MainViewModel : ViewModel() {
                         State.CONNECTED -> {
                             loadingBarIsShowing.update { false }
                         }
-                        State.ALLOWED_TRANSMISSION -> {
-                            serverAllowedTransmission.update { true }
+                        State.ALLOWED_TRANSMISSION -> {}
+
+                        State.ERROR -> {
+                            coroutineScopeOnMain {
+                                sdk.closeServer()
+                                coroutineScopeOnDefault {
+                                    delay(1000)
+                                    coroutineScopeOnMain {
+                                        sdk.connectServer()
+                                    }
+                                }
+                            }
+
                         }
                         else -> {}
                     }

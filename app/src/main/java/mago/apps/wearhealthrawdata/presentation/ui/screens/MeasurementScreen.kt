@@ -249,7 +249,6 @@ private fun DataSendButton() {
     val context = LocalContext.current
     val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
     val isMeasurementEnd = mainViewModel.isSendingButtonEnable.collectAsState().value
-    val serverAllowedTransMission = mainViewModel.serverAllowedTransmission.collectAsState().value
 
     Row(
         modifier = Modifier
@@ -292,8 +291,8 @@ private fun DataSendButton() {
                 .size(width = 60.dp, height = 40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, disableButtonColor, RoundedCornerShape(12.dp))
-                .noDuplicationClickable(enabled = isMeasurementEnd && serverAllowedTransMission) {
-                    Toast.makeText(context, "정보 전송 완가", Toast.LENGTH_SHORT).show()
+                .noDuplicationClickable(enabled = isMeasurementEnd) {
+                    Toast.makeText(context, "정보 전송 완료", Toast.LENGTH_SHORT).show()
                     mainViewModel.sendMedicationInfo()
                 },
             contentAlignment = Alignment.Center
@@ -301,7 +300,7 @@ private fun DataSendButton() {
             Text(
                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp),
                 text = "전송",
-                color = if (isMeasurementEnd && serverAllowedTransMission) enableButtonColor else disableButtonColor.copy(
+                color = if (isMeasurementEnd) enableButtonColor else disableButtonColor.copy(
                     alpha = 0.5f
                 ),
                 fontSize = 14.sp,
