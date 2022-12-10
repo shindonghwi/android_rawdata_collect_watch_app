@@ -91,11 +91,11 @@ class OrotMedicationSDK : IOrotMedicationSDK {
     }
 
     /** 서버로 의료장비에서 측정된 데이터를 보낸다. */
-    override fun sendMedicalInfo(bloodPressureSystolic: Int, glucose: Int) {
+    override fun sendMedicalInfo(heartRate: Int, glucose: Int) {
         try {
             val msg = MessageProtocol(
                 header = HeaderInfo(protocol_id = "DEVICE_MEASUREMENT_ENTRY_ACK"),
-                body = BodyInfo(measurement = MeasurementInfo(bloodPressureSystolic, glucose))
+                body = BodyInfo(measurement = MeasurementInfo(heartRate, glucose))
             )
             Log.w(TAG, "sendMedicalInfo: ${Gson().toJson(msg)}")
             webSocket?.send(Gson().toJson(msg))

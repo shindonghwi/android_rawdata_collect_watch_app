@@ -115,8 +115,7 @@ private fun StartButton() {
             .clip(RoundedCornerShape(12.dp))
             .border(1.dp, enableButtonColor, RoundedCornerShape(12.dp))
             .noDuplicationClickable {
-                activity.mainViewModel.navController.navigate(Screens.Measurement.route)
-//                activity.mainViewModel.connectionOrotServer()
+                activity.mainViewModel.connectionOrotServer()
             },
         contentAlignment = Alignment.Center
     ) {

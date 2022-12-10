@@ -10,7 +10,7 @@ data class HeaderInfo constructor(
     val protocol_id: String? = null,
     val protocol_version: String = "1.0",
     val timestamp: Long = System.currentTimeMillis() / 1000,
-    val device: String? = "Chair",
+    val device: String? = "Watch",
 )
 
 data class BodyInfo constructor(
@@ -18,6 +18,6 @@ data class BodyInfo constructor(
 )
 
 data class MeasurementInfo(
-    val bloodPressureSystolic: Int,
+    val heartRate: Int,
     val glucose: Int,
 )

@@ -1,6 +1,5 @@
 package mago.apps.wearhealthrawdata.presentation.ui.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -23,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.MaterialTheme
 import mago.apps.wearhealthrawdata.R
 import mago.apps.wearhealthrawdata.presentation.ui.MainActivity
-import mago.apps.wearhealthrawdata.presentation.ui.MainActivity.Companion.TAG
 import mago.apps.wearhealthrawdata.presentation.ui.theme.*
 import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.coroutineScopeOnDefault
 import mago.apps.wearhealthrawdata.presentation.ui.utils.compose.noDuplicationClickable
@@ -34,11 +32,11 @@ fun MeasurementScreen() {
     val context = LocalContext.current
     val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
 
-    LaunchedEffect(key1 = Unit){
+    LaunchedEffect(key1 = Unit) {
         mainViewModel.initTrackingHelper(context)
     }
 
-    DisposableEffect(key1 = Unit){
+    DisposableEffect(key1 = Unit) {
         onDispose {
             mainViewModel.clear()
         }
@@ -251,6 +249,7 @@ private fun DataSendButton() {
     val context = LocalContext.current
     val mainViewModel = (LocalContext.current as MainActivity).mainViewModel
     val isMeasurementEnd = mainViewModel.isSendingButtonEnable.collectAsState().value
+    val serverAllowedTransMission = mainViewModel.serverAllowedTransmission.collectAsState().value
 
     Row(
         modifier = Modifier
@@ -293,17 +292,18 @@ private fun DataSendButton() {
                 .size(width = 60.dp, height = 40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, disableButtonColor, RoundedCornerShape(12.dp))
-                .noDuplicationClickable(enabled = isMeasurementEnd) {
-                    Toast
-                        .makeText(context, "전송", Toast.LENGTH_SHORT)
-                        .show()
+                .noDuplicationClickable(enabled = isMeasurementEnd && serverAllowedTransMission) {
+                    Toast.makeText(context, "정보 전송 완가", Toast.LENGTH_SHORT).show()
+                    mainViewModel.sendMedicationInfo()
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 8.dp),
                 text = "전송",
-                color = if (isMeasurementEnd) enableButtonColor else disableButtonColor.copy(alpha = 0.5f),
+                color = if (isMeasurementEnd && serverAllowedTransMission) enableButtonColor else disableButtonColor.copy(
+                    alpha = 0.5f
+                ),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
             )
