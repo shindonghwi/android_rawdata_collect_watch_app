@@ -89,7 +89,7 @@ class MainViewModel : ViewModel() {
         Log.w(TAG, "measurementTimerStart: START")
         for (percent in 0..100) {
             Log.w(TAG, "flow: $percent")
-            if (percent >= 10) {
+            if (percent >= 60) {
                 delay((Random.nextInt(100) + 30).toLong())
             } else {
                 delay((Random.nextInt(350) + 150).toLong())
